@@ -40,9 +40,10 @@ int numberOfHorizontalDisplays = 8;
 int numberOfVerticalDisplays = 1;
 String decodedMsg;
 String msg;
+String testMsg = "I LOVE MY HOT ASIAN SWEETNESS!!!!!!";
 Max72xxPanel matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
 
-String tape = "Arduino";
+//String tape = "Arduino";
 int wait = 25; // In milliseconds
 
 int spacer = 2;
@@ -56,7 +57,7 @@ void handle_msg() {
                         
   matrix.fillScreen(LOW);
   server.send(200, "text/html", form);    // Send same page so they can send another msg
-  refresh=1;
+  refresh=0;
   
   msg = server.arg("msg");
 
@@ -84,19 +85,22 @@ void handle_msg() {
   decodedMsg.replace("%3F", "?");  
   decodedMsg.replace("%40", "@"); 
 
+  decodedMsg.toUpperCase();   // Had to convert the string to upper case.  weird shit happened with lower case.  Why?
+
 // Save decoded message to SPIFFS file for playback on power up.
   File f = SPIFFS.open("/msgf.txt", "w");
   if (!f) {
     Serial.println("File open failed!");
   } else {
+    Serial.print("Entered Message was: ");
+    Serial.print(decodedMsg);
   f.print(decodedMsg);
-  f.close();
   }
-  delay(2000);
+  f.close();
 }
 
 void setup(void) {
-matrix.setIntensity(15); // Use a value between 0 and 15 for brightness
+matrix.setIntensity(9); // Use a value between 0 and 15 for brightness
 matrix.setRotation(0,1);
 matrix.setRotation(1,1);
 matrix.setRotation(2,1);
@@ -121,7 +125,7 @@ matrix.setRotation(7,1);
   Serial.begin(115200);                           // full speed to monitor
   Serial.println();
   SPIFFS.begin();
-  delay(1000);
+  delay(3000);
   Serial.print("Configuring access point...");
   WiFi.softAP(ssid, password);
 //  IPAddress myIP = WiFi.softAPIP();
@@ -140,11 +144,12 @@ matrix.setRotation(7,1);
   });
   server.on("/msg", handle_msg);
   server.begin();
-
+  
 // ***************** INITIAL READY & Read stored message from SPIFFS ****************
     File fr = SPIFFS.open("/msgf.txt", "r");
     while(fr.available()) {
     String line = fr.readStringUntil('n');
+ //   Serial.println(line);
     decodedMsg = line;
     fr.close();
   }
