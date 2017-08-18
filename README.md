@@ -1,5 +1,6 @@
 # ESP8266-WiFi-Marquee
-ESP8266 WiFi Marquee w/ AP
+ESP8266 WiFi Marquee w/ AP:  Has stand-alone full time AP mode for ad-hoc message management & SPIFFS support.
+ESP8266 WiFi Marquee No AP:  Only spawns AP at first run for entering your WiFi network creds, then it will use your network.  Browse to IP address on your network to manage messages.  This one also has SPIFFS support.
 
 
 
