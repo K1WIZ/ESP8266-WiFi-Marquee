@@ -6,31 +6,23 @@ CLK-D5-GPIO14   -> Clk
 GPIO0-D3        -> LOAD
 
 */
-
+#include <string.h>
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
-#include <EEPROM.h>
 #include "./DNSServer.h"                  // Patched lib
-//#include "./EEPROMAnything.h"             // EEPROM
 #include <ESP8266WebServer.h>
 #include <SPI.h>
 #include <Adafruit_GFX.h>
 #include <Max72xxPanel.h>
+#include "FS.h"
 const byte        DNS_PORT = 53;          // Capture DNS requests on port 53
 IPAddress         apIP(10, 10, 10, 1);    // Private network for server
 DNSServer         dnsServer;              // Create the DNS object
-int address = 10;
-char msgToStore[512];
-String readMsg(msgToStore);  // Convert array to string.
-
-
   
 // **************** SET UP AP ***********************
 /* Set these to your desired credentials. */
 const char *ssid = "WiFi Marquee";
 const char *password = "mymessage";
-
-
 
 // ******************* String form to sent to the client-browser ************************************
 String form =
@@ -40,13 +32,14 @@ String form =
   "<form action='msg'><p>Type your message <input type='text' name='msg' size=100 autofocus> <input type='submit' value='Submit'></form>"
   "</center>";
 
-ESP8266WebServer server(80);                             // HTTP server will listen at port 80
+ESP8266WebServer server(80);  // HTTP server will listen at port 80
 long period;
 int offset=1,refresh=0;
 int pinCS = 0; // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf http://arduino.cc/en/Reference/SPI )
 int numberOfHorizontalDisplays = 8;
 int numberOfVerticalDisplays = 1;
 String decodedMsg;
+String msg;
 Max72xxPanel matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
 
 String tape = "Arduino";
@@ -64,13 +57,8 @@ void handle_msg() {
   matrix.fillScreen(LOW);
   server.send(200, "text/html", form);    // Send same page so they can send another msg
   refresh=1;
-  // Display msg on Oled
-  String msg = server.arg("msg");
   
-  Serial.println(msg);
-  msg.toCharArray(msgToStore, msg.length()+1);  // Convert string to array.
-  EEPROM.put(address, msgToStore);
-  
+  msg = server.arg("msg");
 
   decodedMsg = msg;
   // Restore special characters that are misformed to %char by the client browser
@@ -95,10 +83,20 @@ void handle_msg() {
   decodedMsg.replace("%3E", ">");
   decodedMsg.replace("%3F", "?");  
   decodedMsg.replace("%40", "@"); 
+
+// Save decoded message to SPIFFS file for playback on power up.
+  File f = SPIFFS.open("/msgf.txt", "w");
+  if (!f) {
+    Serial.println("File open failed!");
+  } else {
+  f.print(decodedMsg);
+  f.close();
+  }
+  delay(2000);
 }
 
 void setup(void) {
-matrix.setIntensity(5); // Use a value between 0 and 15 for brightness
+matrix.setIntensity(15); // Use a value between 0 and 15 for brightness
 matrix.setRotation(0,1);
 matrix.setRotation(1,1);
 matrix.setRotation(2,1);
@@ -122,6 +120,8 @@ matrix.setRotation(7,1);
 //ESP.wdtDisable();                               // used to debug, disable wachdog timer, 
   Serial.begin(115200);                           // full speed to monitor
   Serial.println();
+  SPIFFS.begin();
+  delay(1000);
   Serial.print("Configuring access point...");
   WiFi.softAP(ssid, password);
 //  IPAddress myIP = WiFi.softAPIP();
@@ -129,7 +129,7 @@ matrix.setRotation(7,1);
 //  Serial.println(myIP);
   WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
   
-    // if DNSServer is started with "*" for domain name, it will reply with
+  // if DNSServer is started with "*" for domain name, it will reply with
   // provided IP to all DNS request
   dnsServer.start(DNS_PORT, "*", apIP);
   
@@ -141,23 +141,21 @@ matrix.setRotation(7,1);
   server.on("/msg", handle_msg);
   server.begin();
 
-// ***************** INITIAL READY ****************
-EEPROM.get(address, msgToStore);
-  decodedMsg = readMsg;
-
-  Serial.println("WebServer ready!   ");
-
-
- 
-  
+// ***************** INITIAL READY & Read stored message from SPIFFS ****************
+    File fr = SPIFFS.open("/msgf.txt", "r");
+    while(fr.available()) {
+    String line = fr.readStringUntil('n');
+    decodedMsg = line;
+    fr.close();
+  }
+  Serial.println("WebServer ready!   "); 
 }
-
 
 void loop(void) {
 
   for ( int i = 0 ; i < width * decodedMsg.length() + matrix.width() - 1 - spacer; i++ ) {
     dnsServer.processNextRequest();
-    server.handleClient();                        // checks for incoming messages
+    server.handleClient();   // checks for incoming messages
     if (refresh==1) i=0;
     refresh=0;
     matrix.fillScreen(LOW);
