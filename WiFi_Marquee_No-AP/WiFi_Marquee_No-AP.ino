@@ -1,6 +1,6 @@
 
 /*
-Project: Wifi controlled LED matrix display with AP Mode
+Project: Wifi controlled LED matrix display without AP Mode - for attaching to local LAN.  Has wifi based setup on first run.
 NodeMCU pins    -> EasyMatrix pins
 MOSI-D7-GPIO13  -> DIN
 CLK-D5-GPIO14   -> Clk
