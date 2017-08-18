@@ -9,9 +9,4 @@ The design is based on an ESP8266 MCU which drives a 8x64 matrix display (basica
 
 At the moment, I could use some help modifying the code to store the submitted message into the ESP8266's flash memory so that if power is cycled, it will read the last stored message and continue scrolling it. Once that milestone is reached, I will mark this project finished.
 
-I found a nice acrylic tube and ABS caps to build a sweet looking case for it from parts on Amazon. Here's what I used:
-
-Caps
-Tube
-Tension Rods
 For the ESP8266, I used the Wemos D1 Mini, but any 8266 chip should work. Comments are in the sourcecode on how to wire the display.
