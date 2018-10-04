@@ -26,11 +26,37 @@ const char *password = "mymessage";
 
 // ******************* String form to sent to the client-browser ************************************
 String form =
-  "<p>"
+  "<html><body>"
   "<center>"
   "<h1>WiFi Marquee</h1>"
-  "<form action='msg'><p>Type your message <input type='text' name='msg' size=100 autofocus> <input type='submit' value='Submit'></form>"
-  "</center>";
+  "<p>Please specify...</p>"
+  "<form action='msg'>"
+  "<table>"
+  "<tr>"
+  "<td>Message</td><td><input type='text' name='msg' autofocus></td>"
+  "</tr>"
+  "<tr>"
+  "<td>Brightness</td><td><select name='brightness'><option value='-1'>auto</option>"
+  "<option value='0'>0</option>"
+  "<option value='1'>1</option>"
+  "<option value='2'>2</option>"
+  "<option value='3'>3</option>"
+  "<option value='4'>4</option>"
+  "<option value='5'>5</option>"
+  "<option value='6'>6</option>"
+  "<option value='7'>7</option>"
+  "<option value='8'>8</option>"
+  "<option value='9'>9</option>"
+  "<option value='10'>10</option>"
+  "</select></td>" 
+  "</tr>"
+  "<tr>"
+  "<td></td><td><input type='submit' value='Submit'></td>"
+  "</tr>"
+  "</table>"
+  "</form>"
+  "</center>"
+  "</body></html>";
 
 ESP8266WebServer server(80);  // HTTP server will listen at port 80
 long period;
@@ -48,6 +74,7 @@ int wait = 25; // In milliseconds
 
 int spacer = 2;
 int width = 5 + spacer; // The font width is 5 pixels
+int formIntensity=-1;
 
 /*
   handles the messages coming from the webbrowser, restores a few special characters and 
@@ -63,6 +90,8 @@ void handle_msg() {
   refresh=0;
   
   msg = server.arg("msg");
+  String formI=server.arg("brightness");
+  formIntensity=formI.toInt();
 
   decodedMsg = msg;
   // Restore special characters that are misformed to %char by the client browser
@@ -174,7 +203,7 @@ void loop(void) {
     server.handleClient();   // checks for incoming messages
   double sensorValue = analogRead(A0);
   Serial.println(sensorValue);
-  intensity=(int)(((sensorValue/1024.0)*(sensorValue/1024.0))*10.0);
+  intensity=formIntensity<0?(int)(((sensorValue/1024.0)*(sensorValue/1024.0))*10.0):formIntensity;
   matrix.setIntensity(intensity);   // 0 = low, 10 = high
 
     if (refresh==1) i=0;
