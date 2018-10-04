@@ -35,8 +35,8 @@ String form =
 ESP8266WebServer server(80);  // HTTP server will listen at port 80
 long period;
 int offset=1,refresh=0;
-int pinCS = 0; // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf http://arduino.cc/en/Reference/SPI )
-int numberOfHorizontalDisplays = 8;
+int pinCS = 4; // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf http://arduino.cc/en/Reference/SPI )
+int numberOfHorizontalDisplays = 12;
 int numberOfVerticalDisplays = 1;
 String decodedMsg;
 String msg;
@@ -109,6 +109,10 @@ matrix.setRotation(4,1);
 matrix.setRotation(5,1);
 matrix.setRotation(6,1);
 matrix.setRotation(7,1);
+matrix.setRotation(8,1);
+matrix.setRotation(9,1);
+matrix.setRotation(10,1);
+matrix.setRotation(11,1);
 
 // Adjust to your own needs
   matrix.setPosition(0, 0, 0); // The first display is at <0, 7>
@@ -119,6 +123,10 @@ matrix.setRotation(7,1);
   matrix.setPosition(5, 5, 0); // The second display is at <1, 0>
   matrix.setPosition(6, 6, 0); // The third display is at <2, 0>
   matrix.setPosition(7, 7, 0); // And the last display is at <3, 0>
+  matrix.setPosition(8, 8, 0); // The first display is at <0, 7>
+  matrix.setPosition(9, 9, 0); // The second display is at <1, 0>
+  matrix.setPosition(10, 10, 0); // The third display is at <2, 0>
+  matrix.setPosition(11, 11, 0); // And the last display is at <3, 0>
 
 
 //ESP.wdtDisable();                               // used to debug, disable wachdog timer, 
@@ -127,12 +135,16 @@ matrix.setRotation(7,1);
   SPIFFS.begin();
   delay(3000);
   Serial.print("Configuring access point...");
-  WiFi.softAP(ssid, password);
 //  IPAddress myIP = WiFi.softAPIP();
 //  Serial.print("AP IP address: ");
 //  Serial.println(myIP);
   WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-  
+Serial.println(WiFi.softAP("ESPsoftAP_01") ? "Ready" : "Failed!");
+
+Serial.print("Soft-AP IP address = ");
+
+Serial.println(WiFi.softAPIP());
+
   // if DNSServer is started with "*" for domain name, it will reply with
   // provided IP to all DNS request
   dnsServer.start(DNS_PORT, "*", apIP);
