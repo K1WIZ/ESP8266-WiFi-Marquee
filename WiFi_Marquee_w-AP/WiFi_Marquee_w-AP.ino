@@ -36,6 +36,9 @@ String form =
   "<td>Message</td><td><input type='text' name='msg' autofocus></td>"
   "</tr>"
   "<tr>"
+  "<td>Number of Runs</td><td><input type='text' name='maxRuns' value='0'></td>"
+  "</tr>"
+  "<tr>"
   "<td>Brightness</td><td><select name='brightness'><option value='-1'>auto</option>"
   "<option value='0'>0</option>"
   "<option value='1'>1</option>"
@@ -75,6 +78,8 @@ int wait = 25; // In milliseconds
 int spacer = 2;
 int width = 5 + spacer; // The font width is 5 pixels
 int formIntensity=-1;
+int maxRuns=-1;
+int runs=0;
 
 /*
   handles the messages coming from the webbrowser, restores a few special characters and 
@@ -88,11 +93,14 @@ void handle_msg() {
   matrix.fillScreen(LOW);
   server.send(200, "text/html", form);    // Send same page so they can send another msg
   refresh=0;
+  runs=0;
+  
   
   msg = server.arg("msg");
   String formI=server.arg("brightness");
   formIntensity=formI.toInt();
-
+  String runsI=server.arg("maxRuns");
+  maxRuns=runsI.toInt();
   decodedMsg = msg;
   // Restore special characters that are misformed to %char by the client browser
   decodedMsg.replace("+", " ");      
@@ -198,7 +206,9 @@ Serial.println(WiFi.softAPIP());
 
 void loop(void) {
 
-  for ( int i = 0 ; i < width * decodedMsg.length() + matrix.width() - 1 - spacer; i++ ) {
+if((maxRuns<1)||(runs<maxRuns))
+{
+  for ( int i = 0 ; i < width * decodedMsg.length() + matrix.width()  - spacer; i++ ) {
     dnsServer.processNextRequest();
     server.handleClient();   // checks for incoming messages
   double sensorValue = analogRead(A0);
@@ -227,6 +237,14 @@ void loop(void) {
 
     delay(wait);
   }
+  ++runs;
+}
+else
+{
+    dnsServer.processNextRequest();
+    server.handleClient();   // checks for incoming messages
+    delay(wait);
+}
 }
 
 
