@@ -53,6 +53,9 @@ int width = 5 + spacer; // The font width is 5 pixels
   handles the messages coming from the webbrowser, restores a few special characters and 
   constructs the strings that can be sent to the oled display
 */
+
+int intensity=0;
+
 void handle_msg() {
                         
   matrix.fillScreen(LOW);
@@ -101,7 +104,7 @@ void handle_msg() {
 
 void setup(void) {
 matrix.setIntensity(9); // Use a value between 0 and 15 for brightness
-matrix.setRotation(0,1);
+/*matrix.setRotation(0,1);
 matrix.setRotation(1,1);
 matrix.setRotation(2,1);
 matrix.setRotation(3,1);
@@ -113,21 +116,13 @@ matrix.setRotation(8,1);
 matrix.setRotation(9,1);
 matrix.setRotation(10,1);
 matrix.setRotation(11,1);
-
+*/
 // Adjust to your own needs
-  matrix.setPosition(0, 0, 0); // The first display is at <0, 7>
-  matrix.setPosition(1, 1, 0); // The second display is at <1, 0>
-  matrix.setPosition(2, 2, 0); // The third display is at <2, 0>
-  matrix.setPosition(3, 3, 0); // And the last display is at <3, 0>
-  matrix.setPosition(4, 4, 0); // The first display is at <0, 7>
-  matrix.setPosition(5, 5, 0); // The second display is at <1, 0>
-  matrix.setPosition(6, 6, 0); // The third display is at <2, 0>
-  matrix.setPosition(7, 7, 0); // And the last display is at <3, 0>
-  matrix.setPosition(8, 8, 0); // The first display is at <0, 7>
-  matrix.setPosition(9, 9, 0); // The second display is at <1, 0>
-  matrix.setPosition(10, 10, 0); // The third display is at <2, 0>
-  matrix.setPosition(11, 11, 0); // And the last display is at <3, 0>
-
+for(int loop=0;loop<numberOfHorizontalDisplays;++loop)
+{
+  matrix.setRotation(loop,3);
+  matrix.setPosition(loop, numberOfHorizontalDisplays-1-loop, 0); // The first display is at <0, 7>
+}
 
 //ESP.wdtDisable();                               // used to debug, disable wachdog timer, 
   Serial.begin(115200);                           // full speed to monitor
@@ -166,6 +161,10 @@ Serial.println(WiFi.softAPIP());
     fr.close();
   }
   Serial.println("WebServer ready!   "); 
+  double sensorValue = analogRead(A0);
+  Serial.println(sensorValue);
+  intensity=(int)(((sensorValue/1024.0)*(sensorValue/1024.0))*10.0);
+  matrix.setIntensity(intensity);   // 0 = low, 10 = high
 }
 
 void loop(void) {
@@ -173,6 +172,11 @@ void loop(void) {
   for ( int i = 0 ; i < width * decodedMsg.length() + matrix.width() - 1 - spacer; i++ ) {
     dnsServer.processNextRequest();
     server.handleClient();   // checks for incoming messages
+  double sensorValue = analogRead(A0);
+  Serial.println(sensorValue);
+  intensity=(int)(((sensorValue/1024.0)*(sensorValue/1024.0))*10.0);
+  matrix.setIntensity(intensity);   // 0 = low, 10 = high
+
     if (refresh==1) i=0;
     refresh=0;
     matrix.fillScreen(LOW);
