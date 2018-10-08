@@ -36,6 +36,9 @@ String form =
   "<td>Message</td><td><input type='text' name='msg' autofocus></td>"
   "</tr>"
   "<tr>"
+  "<td>Scrolling Speed</td><td><input type='text' name='scrSp' value='40'></td>"
+  "</tr>"
+  "<tr>"
   "<td>Number of Runs</td><td><input type='text' name='maxRuns' value='0'></td>"
   "</tr>"
   "<tr>"
@@ -73,7 +76,7 @@ String testMsg = "I LOVE MY HOT ASIAN SWEETNESS!!!!!!";
 Max72xxPanel matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
 
 //String tape = "Arduino";
-int wait = 25; // In milliseconds
+int wait = 75; // In milliseconds
 
 int spacer = 2;
 int width = 5 + spacer; // The font width is 5 pixels
@@ -101,6 +104,13 @@ void handle_msg() {
   formIntensity=formI.toInt();
   String runsI=server.arg("maxRuns");
   maxRuns=runsI.toInt();
+  String spdI=server.arg("scrSp");
+  wait=spdI.toInt();
+  Serial.println(wait);
+  if(wait<5)
+    wait=5;
+  else if(wait>80)
+    wait=80;
   decodedMsg = msg;
   // Restore special characters that are misformed to %char by the client browser
   decodedMsg.replace("+", " ");      
