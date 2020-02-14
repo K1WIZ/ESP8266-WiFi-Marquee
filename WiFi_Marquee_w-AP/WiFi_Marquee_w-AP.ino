@@ -26,17 +26,49 @@ const char *password = "mymessage";
 
 // ******************* String form to sent to the client-browser ************************************
 String form =
-  "<p>"
+  "<html><body>"
   "<center>"
   "<h1>WiFi Marquee</h1>"
-  "<form action='msg'><p>Type your message <input type='text' name='msg' size=100 autofocus> <input type='submit' value='Submit'></form>"
-  "</center>";
+  "<p>Please specify...</p>"
+  "<form action='msg'>"
+  "<table>"
+  "<tr>"
+  "<td>Message</td><td><input type='text' name='msg' autofocus></td>"
+  "</tr>"
+  "<tr>"
+  "<td>Scrolling Speed</td><td><input type='text' name='scrSp' value='40'></td>"
+  "</tr>"
+  "<tr>"
+  "<td>Number of Runs</td><td><input type='text' name='maxRuns' value='0'></td>"
+  "</tr>"
+  "<tr>"
+  "<td>Brightness</td><td><select name='brightness'><option value='-1'>auto</option>"
+  "<option value='0'>0</option>"
+  "<option value='1'>1</option>"
+  "<option value='2'>2</option>"
+  "<option value='3'>3</option>"
+  "<option value='4'>4</option>"
+  "<option value='5'>5</option>"
+  "<option value='6'>6</option>"
+  "<option value='7'>7</option>"
+  "<option value='8'>8</option>"
+  "<option value='9'>9</option>"
+  "<option value='10'>10</option>"
+  "</select></td>" 
+  "</tr>"
+  "<tr>"
+  "<td></td><td><input type='submit' value='Submit'></td>"
+  "</tr>"
+  "</table>"
+  "</form>"
+  "</center>"
+  "</body></html>";
 
 ESP8266WebServer server(80);  // HTTP server will listen at port 80
 long period;
 int offset=1,refresh=0;
-int pinCS = 0; // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf http://arduino.cc/en/Reference/SPI )
-int numberOfHorizontalDisplays = 8;
+int pinCS = 4; // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf http://arduino.cc/en/Reference/SPI )
+int numberOfHorizontalDisplays = 12;
 int numberOfVerticalDisplays = 1;
 String decodedMsg;
 String msg;
@@ -44,23 +76,41 @@ String testMsg = "I LOVE MY HOT ASIAN SWEETNESS!!!!!!";
 Max72xxPanel matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
 
 //String tape = "Arduino";
-int wait = 25; // In milliseconds
+int wait = 75; // In milliseconds
 
 int spacer = 2;
 int width = 5 + spacer; // The font width is 5 pixels
+int formIntensity=-1;
+int maxRuns=-1;
+int runs=0;
 
 /*
   handles the messages coming from the webbrowser, restores a few special characters and 
   constructs the strings that can be sent to the oled display
 */
+
+int intensity=0;
+
 void handle_msg() {
                         
   matrix.fillScreen(LOW);
   server.send(200, "text/html", form);    // Send same page so they can send another msg
   refresh=0;
+  runs=0;
+  
   
   msg = server.arg("msg");
-
+  String formI=server.arg("brightness");
+  formIntensity=formI.toInt();
+  String runsI=server.arg("maxRuns");
+  maxRuns=runsI.toInt();
+  String spdI=server.arg("scrSp");
+  wait=spdI.toInt();
+  Serial.println(wait);
+  if(wait<5)
+    wait=5;
+  else if(wait>80)
+    wait=80;
   decodedMsg = msg;
   // Restore special characters that are misformed to %char by the client browser
   decodedMsg.replace("+", " ");      
@@ -101,7 +151,7 @@ void handle_msg() {
 
 void setup(void) {
 matrix.setIntensity(9); // Use a value between 0 and 15 for brightness
-matrix.setRotation(0,1);
+/*matrix.setRotation(0,1);
 matrix.setRotation(1,1);
 matrix.setRotation(2,1);
 matrix.setRotation(3,1);
@@ -109,17 +159,17 @@ matrix.setRotation(4,1);
 matrix.setRotation(5,1);
 matrix.setRotation(6,1);
 matrix.setRotation(7,1);
-
+matrix.setRotation(8,1);
+matrix.setRotation(9,1);
+matrix.setRotation(10,1);
+matrix.setRotation(11,1);
+*/
 // Adjust to your own needs
-  matrix.setPosition(0, 0, 0); // The first display is at <0, 7>
-  matrix.setPosition(1, 1, 0); // The second display is at <1, 0>
-  matrix.setPosition(2, 2, 0); // The third display is at <2, 0>
-  matrix.setPosition(3, 3, 0); // And the last display is at <3, 0>
-  matrix.setPosition(4, 4, 0); // The first display is at <0, 7>
-  matrix.setPosition(5, 5, 0); // The second display is at <1, 0>
-  matrix.setPosition(6, 6, 0); // The third display is at <2, 0>
-  matrix.setPosition(7, 7, 0); // And the last display is at <3, 0>
-
+for(int loop=0;loop<numberOfHorizontalDisplays;++loop)
+{
+  matrix.setRotation(loop,3);
+  matrix.setPosition(loop, numberOfHorizontalDisplays-1-loop, 0); // The first display is at <0, 7>
+}
 
 //ESP.wdtDisable();                               // used to debug, disable wachdog timer, 
   Serial.begin(115200);                           // full speed to monitor
@@ -127,12 +177,16 @@ matrix.setRotation(7,1);
   SPIFFS.begin();
   delay(3000);
   Serial.print("Configuring access point...");
-  WiFi.softAP(ssid, password);
 //  IPAddress myIP = WiFi.softAPIP();
 //  Serial.print("AP IP address: ");
 //  Serial.println(myIP);
   WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-  
+Serial.println(WiFi.softAP("ESPsoftAP_01") ? "Ready" : "Failed!");
+
+Serial.print("Soft-AP IP address = ");
+
+Serial.println(WiFi.softAPIP());
+
   // if DNSServer is started with "*" for domain name, it will reply with
   // provided IP to all DNS request
   dnsServer.start(DNS_PORT, "*", apIP);
@@ -154,13 +208,24 @@ matrix.setRotation(7,1);
     fr.close();
   }
   Serial.println("WebServer ready!   "); 
+  double sensorValue = analogRead(A0);
+  Serial.println(sensorValue);
+  intensity=(int)(((sensorValue/1024.0)*(sensorValue/1024.0))*10.0);
+  matrix.setIntensity(intensity);   // 0 = low, 10 = high
 }
 
 void loop(void) {
 
-  for ( int i = 0 ; i < width * decodedMsg.length() + matrix.width() - 1 - spacer; i++ ) {
+if((maxRuns<1)||(runs<maxRuns))
+{
+  for ( int i = 0 ; i < width * decodedMsg.length() + matrix.width()  - spacer; i++ ) {
     dnsServer.processNextRequest();
     server.handleClient();   // checks for incoming messages
+  double sensorValue = analogRead(A0);
+  Serial.println(sensorValue);
+  intensity=formIntensity<0?(int)(((sensorValue/1024.0)*(sensorValue/1024.0))*10.0):formIntensity;
+  matrix.setIntensity(intensity);   // 0 = low, 10 = high
+
     if (refresh==1) i=0;
     refresh=0;
     matrix.fillScreen(LOW);
@@ -182,6 +247,14 @@ void loop(void) {
 
     delay(wait);
   }
+  ++runs;
+}
+else
+{
+    dnsServer.processNextRequest();
+    server.handleClient();   // checks for incoming messages
+    delay(wait);
+}
 }
 
 
