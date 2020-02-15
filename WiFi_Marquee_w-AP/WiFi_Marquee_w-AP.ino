@@ -5,6 +5,8 @@ MOSI-D7-GPIO13  -> DIN
 CLK-D5-GPIO14   -> Clk
 GPIO0-D3        -> LOAD
 
+Revision: Feb, 14 2020, John Rogers
+
 */
 #include <string.h>
 #include <ESP8266WiFi.h>
@@ -13,13 +15,13 @@ GPIO0-D3        -> LOAD
 #include <ESP8266WebServer.h>
 #include <SPI.h>
 #include <Adafruit_GFX.h>
-#include <Max72xxPanel.h>
+#include <Max72xxPanel.h>   // look in sketch directory and copy library to global library directory
 #include "FS.h"
 const byte        DNS_PORT = 53;          // Capture DNS requests on port 53
 IPAddress         apIP(10, 10, 10, 1);    // Private network for server
 DNSServer         dnsServer;              // Create the DNS object
   
-// **************** SET UP AP ***********************
+// **************** SET UP AP ***********************   //   Marquee should be password protected to prevent unauthorized changes
 /* Set these to your desired credentials. */
 const char *ssid = "WiFi Marquee";
 const char *password = "mymessage";
@@ -36,13 +38,14 @@ String form =
   "<td>Message</td><td><input type='text' name='msg' autofocus></td>"
   "</tr>"
   "<tr>"
-  "<td>Scrolling Speed</td><td><input type='text' name='scrSp' value='40'></td>"
+  "<td>Scrolling Speed</td><td><input type='text' name='scrSp' value='20'></td>"      // Set a reasonable scroll speed for easy quick reading.  Need to figure out how to save to EEPROM or SPIFFS to preserve setting
   "</tr>"
   "<tr>"
   "<td>Number of Runs</td><td><input type='text' name='maxRuns' value='0'></td>"
   "</tr>"
   "<tr>"
-  "<td>Brightness</td><td><select name='brightness'><option value='-1'>auto</option>"
+  "<td>Brightness</td><td><select name='brightness'><option value='12'>12</option>"   // Set for default bright setting, but user can override.  Need to figure out how to save to EEPROM or SPIFFS to preserve setting
+  "<option value='-1'>auto</option>"
   "<option value='0'>0</option>"
   "<option value='1'>1</option>"
   "<option value='2'>2</option>"
@@ -54,6 +57,11 @@ String form =
   "<option value='8'>8</option>"
   "<option value='9'>9</option>"
   "<option value='10'>10</option>"
+  "<option value='11'>11</option>"
+  "<option value='12'>12</option>"
+  "<option value='13'>13</option>"
+  "<option value='14'>14</option>"
+  "<option value='15'>15</option>"
   "</select></td>" 
   "</tr>"
   "<tr>"
@@ -72,15 +80,14 @@ int numberOfHorizontalDisplays = 12;
 int numberOfVerticalDisplays = 1;
 String decodedMsg;
 String msg;
-String testMsg = "I LOVE MY HOT ASIAN SWEETNESS!!!!!!";
+
 Max72xxPanel matrix = Max72xxPanel(pinCS, numberOfHorizontalDisplays, numberOfVerticalDisplays);
 
-//String tape = "Arduino";
-int wait = 75; // In milliseconds
+int wait = 20; // In milliseconds
 
 int spacer = 2;
 int width = 5 + spacer; // The font width is 5 pixels
-int formIntensity=-1;
+int formIntensity=13;
 int maxRuns=-1;
 int runs=0;
 
@@ -113,14 +120,15 @@ void handle_msg() {
     wait=80;
   decodedMsg = msg;
   // Restore special characters that are misformed to %char by the client browser
+  
   decodedMsg.replace("+", " ");      
   decodedMsg.replace("%21", "!");  
-  decodedMsg.replace("%22", "");  
+  decodedMsg.replace("%22", "");  //  quote character doesnt seem to render - needs fixing
   decodedMsg.replace("%23", "#");
   decodedMsg.replace("%24", "$");
   decodedMsg.replace("%25", "%");  
   decodedMsg.replace("%26", "&");
-  decodedMsg.replace("%27", "'");  
+  decodedMsg.replace("%27", "'"); //  doesnt seem to render - needs fixing
   decodedMsg.replace("%28", "(");
   decodedMsg.replace("%29", ")");
   decodedMsg.replace("%2A", "*");
@@ -135,7 +143,7 @@ void handle_msg() {
   decodedMsg.replace("%3F", "?");  
   decodedMsg.replace("%40", "@"); 
 
-  decodedMsg.toUpperCase();   // Had to convert the string to upper case.  weird shit happened with lower case.  Why?
+  decodedMsg.toUpperCase();   // convert the string to upper case for easy readability.
 
 // Save decoded message to SPIFFS file for playback on power up.
   File f = SPIFFS.open("/msgf.txt", "w");
@@ -150,20 +158,8 @@ void handle_msg() {
 }
 
 void setup(void) {
-matrix.setIntensity(9); // Use a value between 0 and 15 for brightness
-/*matrix.setRotation(0,1);
-matrix.setRotation(1,1);
-matrix.setRotation(2,1);
-matrix.setRotation(3,1);
-matrix.setRotation(4,1);
-matrix.setRotation(5,1);
-matrix.setRotation(6,1);
-matrix.setRotation(7,1);
-matrix.setRotation(8,1);
-matrix.setRotation(9,1);
-matrix.setRotation(10,1);
-matrix.setRotation(11,1);
-*/
+matrix.setIntensity(12); // Use a value between 0 and 15 for brightness
+
 // Adjust to your own needs
 for(int loop=0;loop<numberOfHorizontalDisplays;++loop)
 {
@@ -177,15 +173,13 @@ for(int loop=0;loop<numberOfHorizontalDisplays;++loop)
   SPIFFS.begin();
   delay(3000);
   Serial.print("Configuring access point...");
-//  IPAddress myIP = WiFi.softAPIP();
-//  Serial.print("AP IP address: ");
-//  Serial.println(myIP);
+
   WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
-Serial.println(WiFi.softAP("ESPsoftAP_01") ? "Ready" : "Failed!");
+  Serial.println(WiFi.softAP("WiFi Marquee") ? "Ready" : "Failed!");   // to prevent unauthorized message change, we should use password protected AP
 
-Serial.print("Soft-AP IP address = ");
+  Serial.print("Soft-AP IP address = ");
 
-Serial.println(WiFi.softAPIP());
+  Serial.println(WiFi.softAPIP());
 
   // if DNSServer is started with "*" for domain name, it will reply with
   // provided IP to all DNS request
@@ -209,7 +203,7 @@ Serial.println(WiFi.softAPIP());
   }
   Serial.println("WebServer ready!   "); 
   double sensorValue = analogRead(A0);
-  Serial.println(sensorValue);
+  //Serial.println(sensorValue);                     //  for debug
   intensity=(int)(((sensorValue/1024.0)*(sensorValue/1024.0))*10.0);
   matrix.setIntensity(intensity);   // 0 = low, 10 = high
 }
@@ -222,7 +216,7 @@ if((maxRuns<1)||(runs<maxRuns))
     dnsServer.processNextRequest();
     server.handleClient();   // checks for incoming messages
   double sensorValue = analogRead(A0);
-  Serial.println(sensorValue);
+  //Serial.println(sensorValue);                     // for debug   
   intensity=formIntensity<0?(int)(((sensorValue/1024.0)*(sensorValue/1024.0))*10.0):formIntensity;
   matrix.setIntensity(intensity);   // 0 = low, 10 = high
 
@@ -256,5 +250,3 @@ else
     delay(wait);
 }
 }
-
-
