@@ -11,11 +11,11 @@ Revision: Feb, 14 2020, John Rogers
 #include <string.h>
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
-#include "./DNSServer.h"                  // Patched lib
+#include "DNSServer.h"                  // Patched lib
 #include <ESP8266WebServer.h>
 #include <SPI.h>
 #include <Adafruit_GFX.h>
-#include <Max72xxPanel.h>   // look in sketch directory and copy library to global library directory
+#include "Max72xxPanel.h"   
 #include "FS.h"
 const byte        DNS_PORT = 53;          // Capture DNS requests on port 53
 IPAddress         apIP(10, 10, 10, 1);    // Private network for server

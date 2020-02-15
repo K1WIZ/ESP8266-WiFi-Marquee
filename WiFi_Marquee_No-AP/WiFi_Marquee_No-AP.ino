@@ -13,8 +13,8 @@ GPIO12-D6        -> LOAD
 #include <ESP8266WebServer.h>
 #include <SPI.h>
 #include <Adafruit_GFX.h>
-#include <Max72xxPanel.h>
-#include <DNSServer.h>
+#include "Max72xxPanel.h"
+#include "DNSServer.h"
 #include <WiFiManager.h>
 #include "FS.h"
 
@@ -183,5 +183,3 @@ void loop(void) {
     delay(wait);
   }
 }
-
-

@@ -16,8 +16,8 @@ GPIO12-D6        -> LOAD
 #include <PubSubClient.h>
 #include <SPI.h>
 #include <Adafruit_GFX.h>
-#include <Max72xxPanel.h>
-#include <DNSServer.h>
+#include "Max72xxPanel.h"
+#include "DNSServer.h"
 #include <WiFiManager.h>
 #include "FS.h"
 /*
